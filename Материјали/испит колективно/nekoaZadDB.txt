@@ -1,0 +1,15 @@
+--pablos = sigma artist='Pablo Picasso' (Artwork)
+--pablo_exibition = pablos join Artwork.artwork_code=ExhibitedArtwork.artwork_code (ExhibitedArtwork)
+--pablo_exibitions = pablo_exibition join ExhibitedArtwork.exhibition_id=Exhibition.exhibition_id (Exhibition)
+
+--counted = gamma exhibition_name; count(exhibition_name)->count_e (pablo_exibitions)
+--max_count =(gamma max(count_e)->best_c (counted))
+
+--pi exhibition_name (max_count join best_c=count_e (counted))
+
+--all_exec = (pi exhibition_name,artwork_code (Exhibition ⨝ (Exhibition.exhibition_id=ExhibitedArtwork.exhibition_id) ExhibitedArtwork))
+--pablo_art = (sigma (artist='Pablo Picasso') (Artwork))
+--pablo_exeb = (pablo_art ⨝ all_exec)
+--counted = (γ exhibition_name; count(exhibition_name)→Count (pablo_exeb ))
+--max_c = (γ  max(Count)→Maxx (counted ))
+--pi exhibition_name (counted ⨝ (Maxx=Count ) (max_c) )

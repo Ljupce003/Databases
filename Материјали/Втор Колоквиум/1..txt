@@ -1,0 +1,52 @@
+1.
+R - nonClustered 
+height 2 and 10 nodes  file has 30 blocks ,each block with 4 records
+
+S - clustered
+height 2 and 12 leafs file has 40 blocks, each block with 5 records
+
+What is the number of accesses to blocks
+
+R
+1 is for the root,then 2 more to reach the leftmost leaf node, then 9 more to reach the remaining 9 leaf nodes, and to read all leaf nodes 30*4.
+1+2+9+120=132
+
+S
+1 for the root, 2 more to reach the leftmost node,11 more to reach the remaining leaf nodes and to read all records 40*5 * 3/2
+1+2+11+40=54
+
+
+2.
+composite index <deliveries,mileage> that is non-clustered with Alternative 3(key,list of pointers) d=1 height=2
+file has 20 blocks
+
+Waht is the num of IO reads to get to the leaf
+1 for root, 2 to get the leaf = 3
+
+Num of accesses to blocks(including goint thru the index)
+1 for the root,2 to get to the leaf,5 for the possible results =8
+
+
+
+
+4.
+
+100 blocks
+nonClustered index on ranking alternative 2 with d=2 with height=3
+
+1 root ,3 to get to index, 100 za sekoj blok
+
+4 to get to the leaf nodes
+
+max-out =2d+1 =5
+4 record per block
+
+5^3=125 number of leafes
+
+toa access every record we would need 4*125=500 IO operations
+
+NBu
+
+
+
+

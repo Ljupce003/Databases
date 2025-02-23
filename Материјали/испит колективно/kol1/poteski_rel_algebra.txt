@@ -1,0 +1,15 @@
+(pi name (Frequents))- pi name (Frequents - (pi name,pizzeria (Frequents join Eats join (Serves))))
+-- Vraka samo tie shto posetile pizzeria sho moze da posluze toa so go jadat.
+
+
+--Se dobivaat lugeto koi bile vo pizzeria kade se prodava nesto so ne jadat.
+pi name,pizza (Frequents join Serves) - Eats
+
+
+
+'Dan'	'pepperoni'
+'Dan'	'cheese'
+'Dan'	'sausage'
+'Dan'	'supreme'
+'Dan'	'mushroom'
+
