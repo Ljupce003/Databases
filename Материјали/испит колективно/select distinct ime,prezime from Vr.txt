@@ -1,0 +1,161 @@
+select distinct ime,prezime from Vraboteni v
+join Programer p on p.embg=v.embg
+join Implementacija imp on p.embg=imp.p_embg
+where v.grad = 'Skopje' and mo.p_kod in (select p_kod from Implementacija im join Modul mm on im.m_kod=mm.kod where mm.ime = 'PRODAZBA')
+
+
+select p_embg from Implementacija
+where p_embg not in (select im.p_emg from Implementacija im where im.datum like '2021%')
+
+
+select embg,sum(casovi) from Programer
+join Implementacija on embg=p_embg
+group by embg
+
+
+with count_z_proekt as (select p.kod,count(distinct iz.m_kod) as num_moduli from Proekt p join Implementacija iz on p.kod=iz.p_kod group by p.kod),
+
+
+select distinct embg from Izrabotka iz
+join Dokumentacija do on iz.p_kod=do.p_kod and iz.dok_kod=do.dok_kod
+join count_z_proekt co on do.p_kod=co.kod
+where co.num_moduli > 5
+
+with unionized as (select modul1,modul2 from Kompatibilnost
+		   union 
+		   select modul2,modul1 from Kompatibilnost),
+	comb as (select distinct * from unionized)
+
+with max_compatible as (select modul1,count(distinct modul2) as num_com from comb
+			group by modul1)
+
+select modul1 from max_compatible ma
+where num_com = (select max(num_com) from max_compatible)
+
+
+
+with modules_total as (
+select p.kod,sum(c.cena) as total_m from Proekt p
+join Obem o on p.obem=o.obem
+join Implementacija im on p.kod=im.p_kod
+join Modul m on im.m_kod=m.kod
+join Tip t on m.tip=t.tip
+join Cenovnik c on c.tip_kod=t.tip and c.obem=o.obem
+group by p.kod),
+	doc_total as (select p_kod,sum(cena) as total_d from Dokumentacija
+		      group by p_kod)
+
+select p.Ime,mt.total_m+dt.total_d from Proekt p
+join modules_total mt on p.kod=mt.kod
+join doc_total dt on dt.kod=p.kod
+union
+select p.Ime,dt.total_d from Proekt p
+join doc_total dt on dt.kod=p.kod
+where p.kod not in (select kod from modules_total)
+
+
+combined as (select p.kod,
+		coalesce(mt.total_m,0) as total_m,
+		coalesce(dt.total_d,0) as total_d 
+		from Proekt p
+		left join modules_total mt on p.kod=mt.kod
+		left join doc_total dt on dt.kod=p.kod)
+
+
+select kod,total_m+total_d as total from combined
+
+
+select k.k_ime from Narachka n
+join Korisnik k on n.korisnik=k.k_ime
+join Lokacija l on k.lokacija=l.lokacija
+where l.ime  like '%Skopje%' and n.datum like '2021%'
+
+
+
+select k.k_ime,p.* from Korisnik k
+join Zelbi z on k.k_ime=z.korisnik
+join Narachki n on k.k_ime=n.korisnik
+join Stavka s on n.ID=s.narachka
+join Produkt p on s.produkt=p.ID
+where p.ID not in (select ko.produkt from Koshnicka ko where ko.korisnik=k.k_ime and ko.datum=n.datum) 
+ and p.ID not in (select product from Zelbi where korisnik=k.k_ime)
+
+
+
+with counted as (select k.produkt,count(k.produkt) as br_dodavan from Koshnicka k
+		where k.datum like '2021%'
+		group by k.produkt
+		)
+
+select produkt from counted
+where br_dodavan (select max(br_dodavan) from counted)
+
+
+with counted as (select n.ID,sum(s.kolicina * p.cena) as total from Narachka n
+		join Stavka s on s.narachka=n.ID
+		join Produkt p on s.produkt=p.ID
+		group by n.ID),
+	max_nar as (
+		select ID from counted
+		where total = (select max(total) from counted)
+		)
+
+select n.korisnik from Narachka n
+join max_nar mn on n.ID=mn.ID
+
+
+
+with avg_kosh as (
+		select produkt,avg(kolicina) as prosecna from Kosnicka
+		where datum like '2021%'
+		group by produkt),
+     total_nar as (select s.produkt,sum(s.kolicina) as vkupna
+		from Narachka n 
+		join Stavka s on n.ID=s.narachka
+		where n.datum like '2021%'
+		group by s.produkt
+)
+
+select kat.ime,p.ime from Kategorija kat
+join Produkt p on kat.ID=p.kategorija
+join avg_kosh ak on ak.produkt=p.ID
+join total_nar tn on tn.produkt=p.ID
+where tn.vkupna < ak.prosecna
+
+
+
+
+
+
+
+
+
+
+
+
+create trigger TrackingTrigger before insert on Sledenje
+
+when ((select ras.rastojanie from Narachka n 
+       join Korisnik k on n.korisnik=k.k_ime
+       join Rastojanie ras on ((ras.lok1=new.lokacija and ras.lok2=k.lokacija) or (ras.lok2=new.lokacija and ras.lok1=k.lokacija))
+       where n.ID=new.narachka
+      ) < 500)
+begin 
+	set new.status='isporachano'	
+end;
+
+
+with calc_p_narachka as (
+select n.korisnik,n.ID,sum((p.cena * s.kolicina) * (1-(popust*1.0 / 100))) as vkupno from Narachka n
+join Stavka s on n.ID=s.narachka
+join Produkt p on p.ID=s.produkt
+join Popust pop on s.kolicina=pop.kolicina and pop.kategorij=p.kategorija
+group by n.korisnik,n.ID)
+
+select korisnik,sum(vkupno) as total from calc_p_narachka
+group by korisnik
+
+
+
+
+

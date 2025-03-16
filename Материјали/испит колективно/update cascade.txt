@@ -1,0 +1,27 @@
+//update cascade
+create trigger UpdateTriggerCasc before update of ID on Korisnik
+for each row
+begin
+	Update Narachka
+	set korisnikID=new.ID
+	where korisnikID=old.ID;
+end;
+
+
+//delete cascade
+create trigger DeleteTriggerCasc before delete on Korisnik
+for each row
+begin
+	Delete from Narachka
+	Where korisnikID=old.ID;
+end;
+
+
+//delete set null
+create trigger DeleteTriggerNull before delete on Korisnik
+for each row
+begin
+	Update Narachka
+	set KorisnikID = null
+	where KorisnikID=old.ID;
+end;
